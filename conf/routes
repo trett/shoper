@@ -1,0 +1,37 @@
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# https://www.playframework.com/documentation/latest/ScalaRouting
+# ~~~~
+
+# PurchaseController
+GET         /                       controllers.PurchaseController.index()
+
+GET         /purschase/list         controllers.PurchaseController.load()
+
++nocsrf
+POST        /purchase/save          controllers.PurchaseController.save()
+
++nocsrf
+POST        /purcahse/update        controllers.PurchaseController.update()
+
+
+# LoginController
+GET         /loginForm              controllers.LoginController.loginForm()
+
+POST        /login                  controllers.LoginController.login()
+
+
+# UserController
+GET         /userForm               controllers.UserController.form()
+
+GET         /users                  controllers.UserController.users()
+
+GET         /profile                controllers.UserController.updateForm()
+
+POST        /user/save              controllers.UserController.save()
+
+POST        /user/update            controllers.UserController.update()
+
+
+# Map static resources from the /public folder to the /assets URL path
+GET         /assets/*file           controllers.Assets.versioned(path="/public", file: Asset)

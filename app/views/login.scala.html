@@ -1,0 +1,20 @@
+@(loginConstraints: Form[LoginForm])(implicit request: RequestHeader, messages: Messages)
+    @implicitFieldConstructor = @{
+        b4.vertical.fieldConstructor(isCustom = true, withFeedbackTooltip = true)
+    }
+
+    @main("Login") {
+        <div class="container">
+            <div class="justify-content-center col-lg-6 offset-lg-3 mt-4">
+                <h4>Shoper</h4>
+                @b4.formCSRF(routes.LoginController.login(), Symbol("class") -> "mt-4") {
+                    @b4.text(loginConstraints("email"),
+                        Symbol("_label") -> "Email",
+                        Symbol("_class") -> "position-relative")
+                    @b4.password(loginConstraints("password"), Symbol("_label") -> "Password")
+                    @b4.buttonType("submit", Symbol("class") -> "btn btn-primary") {
+                        <i class="fas fa-ok"></i> Sign in }
+                }
+            </div>
+        </div>
+    }

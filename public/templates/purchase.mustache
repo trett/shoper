@@ -1,0 +1,16 @@
+{{#items}}
+    <div class="input-group mb-2" id="ig-{{id}}">
+        <div class="input-group-prepend" id="ipg-{{id}}">
+            <div class="input-group-text">
+                <button class="btn btn-sm {{buttonColor}}" type="button" id="cb-{{id}}">{{buttonText}}</button>
+            </div>
+        </div>
+
+        <textarea id="ta-{{id}}" rows="2" class="form-control" data-status="{{status}}" disabled>{{name}}</textarea>
+
+        <div class="input-group-append">
+            <button class="btn btn-outline-secondary" type="button" id="db-{{id}}">
+                <i class="fas fa-trash"></i></button>
+        </div>
+    </div>
+{{/items}}
