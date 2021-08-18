@@ -1,0 +1,26 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- main
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- script: echo Hello, world!
+  displayName: 'Run a one-line script'
+
+- script: |
+    wget http://apt.typesafe.com/repo-deb-build-0002.deb
+    sudo dpkg -i repo-deb-build-0002.deb
+    sudo apt-get update
+    sudo apt-get install sbt
+  displayName: 'Install SBT.'
+
+- script: sbt test
+  displayName: 'Test.'
+
+
