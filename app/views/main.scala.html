@@ -1,0 +1,31 @@
+@*
+ * This template is called from the `index` template. This template
+ * handles the rendering of the page header and body tags. It takes
+ * two arguments, a `String` for the title of the page and an `Html`
+ * object to insert into the body of the page.
+ *@
+@(title: String)(content: Html)
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Shoper</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" media="screen" href="@routes.Assets.versioned("stylesheets/main.css")">
+        <link rel="shortcut icon" type="image/png" href="@routes.Assets.versioned("images/favicon.png")">
+        <link rel="stylesheet" href="@routes.Assets.versioned("lib/bootstrap/css/bootstrap.css")">
+        <link rel="stylesheet" href="@routes.Assets.versioned("lib/font-awesome/css/fontawesome.css")">
+        <link rel="stylesheet" href="@routes.Assets.versioned("lib/font-awesome/css/solid.css")">
+@*        <link rel="stylesheet" href="@routes.Assets.versioned("lib/font-awesome/css/brands.css")">*@
+    </head>
+    <body>
+        <div class="container">
+            @content
+        </div>
+
+@*		<script src="@routes.Assets.versioned("javascripts/purchases.js")" type="module"></script>*@
+        <script src="@routes.Assets.versioned("lib/jquery/jquery.js")" type="text/javascript"></script>
+        @*		<script src="@routes.Assets.versioned("lib/vue/vue.js")" type="text/javascript"></script>*@
+        @*		<script src="@routes.Assets.versioned("lib/bootstrap-vue/dist/bootstrap-vue.js")" type="text/javascript"></script>*@
+    </body>
+</html>
