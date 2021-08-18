@@ -1,0 +1,28 @@
+@(userConstraints: Form[User], email: String, name: Option[String])(implicit request: RequestHeader, messages: Messages)
+    @implicitFieldConstructor = @{
+        b4.vertical.fieldConstructor(isCustom = true, withFeedbackTooltip = true)
+    }
+
+    @main("Profile") {
+        @menu {
+            @helper.javascriptRouter("jsRoutes")(routes.javascript.UserController.update)
+            <div>
+            @b4.formCSRF(routes.UserController.update(), Symbol("class") -> "mt-4") {
+                @b4.text(userConstraints("email"),
+                    Symbol("_label") -> "Email",
+                    Symbol("placeholder") -> "Email",
+                    Symbol("value") -> email,
+                    Symbol("readonly") -> "readonly")
+                @b4.password(userConstraints("password"),
+                    Symbol("_label") -> "Password",
+                    Symbol("_class") -> "position-relative")
+                @b4.text(userConstraints("name"),
+                    Symbol("_label") -> "Name",
+                    Symbol("placeholder") -> "Your Name",
+                    Symbol("value") -> name.getOrElse(""))
+                @b4.buttonType("submit", Symbol("class") -> "btn btn-primary") {
+                    <i class="fas fa-save"></i> Save }
+            }
+            </div>
+        }
+    }

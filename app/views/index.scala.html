@@ -1,0 +1,26 @@
+@(user: User)(implicit req: play.api.mvc.RequestHeader)
+
+@main("Shoper") {
+    @menu {
+        @helper.javascriptRouter("jsRoutes")(
+            routes.javascript.PurchaseController.save,
+            routes.javascript.PurchaseController.load,
+            routes.javascript.PurchaseController.update
+        )
+        <script src="@routes.Assets.versioned("javascripts/main.js")" type="module"></script>
+        <p class="lead">Purchase List</p>
+        <div class="row">
+            <div id="purchaseList" class="col"></div>
+        </div>
+        <div class="row mt-3">
+            <div class="col">
+                <button type="button" class="btn btn-outline-success" id="add-row-button">
+                    <i class="fas fa-plus"></i> Add
+                </button>
+                <button type="button" class="btn btn-primary" id="save-button">
+                    <i class="fas fa-save"></i> Save
+                </button>
+            </div>
+        </div>
+    }
+}
