@@ -48,7 +48,7 @@ jobs:
           name: shoperapp
           ip-address: Public
           location: 'east us'
-          port: 80
+          ports: 80
           cpu: 1
           memory: 1
           environment-variables: APPLICATION_SECRET=${{ secrets.REGISTRY_PASSWORD }} HTTP_PORT=80
