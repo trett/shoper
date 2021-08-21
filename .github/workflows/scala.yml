@@ -46,7 +46,8 @@ jobs:
           registry-username: ${{ secrets.REGISTRY_USERNAME }}
           registry-password: ${{ secrets.REGISTRY_PASSWORD }}
           name: shoperapp
-          ip-address: Public
+          vnet: ${{ secrets.VNET }}
+          subnet: ${{ secrets.SUBNET }}
           location: 'east us'
           ports: 80
           cpu: 1
