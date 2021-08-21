@@ -35,3 +35,20 @@ jobs:
       - run: |
           docker build . -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/shoper:${{ github.sha }}
           docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/shoper:${{ github.sha }}
+
+      - name: 'Deploy to Azure Container Instances'
+        uses: 'azure/aci-deploy@v1'
+        with:
+          resource-group: ${{ secrets.RESOURCE_GROUP }}
+          dns-name-label: shoper
+          image: ${{ secrets.REGISTRY_LOGIN_SERVER }}/shoper:${{ github.sha }}
+          registry-login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
+          registry-username: ${{ secrets.REGISTRY_USERNAME }}
+          registry-password: ${{ secrets.REGISTRY_PASSWORD }}
+          name: shoperapp
+          ip-address: public
+          location: 'east us'
+          port: 80
+          cpu: 1
+          memory: 1
+          environment-variables: APPLICATION_SECRET=${{ secrets.REGISTRY_PASSWORD }} HTTP_PORT=80
