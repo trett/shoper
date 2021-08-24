@@ -11,11 +11,10 @@ CREATE TABLE users
 
 CREATE TABLE purchases
 (
-    id      bigint(20) NOT NULL AUTO_INCREMENT,
+    id      SERIAL PRIMARY KEY,
     name    varchar(255) NOT NULL,
     status  varchar(255) NOT NULL,
-    comment varchar(255),
-    PRIMARY KEY (id)
+    comment varchar(255)
 );
 
 INSERT INTO users (email, password)
