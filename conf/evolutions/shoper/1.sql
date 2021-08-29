@@ -6,6 +6,7 @@ CREATE TABLE users
 (
     email    varchar(100) NOT NULL,
     password varchar(100) NOT NULL,
+    name varchar(100),
     PRIMARY KEY (email)
 );
 
@@ -18,12 +19,7 @@ CREATE TABLE purchases
 );
 
 INSERT INTO users (email, password)
-VALUES ('admin', '10000:KwdjA92VzGmsMeEXT2nshJCwoum+pBTkUFZvfFre8Ow=:m841hCA7LVe4luaQyZtCVg==');
-
-INSERT INTO purchases (id, name, status)
-VALUES (1, 'apple', 'TODO');
-INSERT INTO purchases (id, name, status, comment)
-VALUES (2, 'orange', 'TODO', 'maybe');
+VALUES ('admin@server.local', '10000:KwdjA92VzGmsMeEXT2nshJCwoum+pBTkUFZvfFre8Ow=:m841hCA7LVe4luaQyZtCVg==');
 
 -- !Downs
 

@@ -1,56 +1,66 @@
 package controllers
 
-import controllers.helpers.{PasswordHelper, SessionDao}
-import models.Tables.users
-import models.User
+import controllers.helpers.{DatabaseExecutionContext, PasswordHelper, SessionDao}
+import models.UserRepository
 import play.api.Logger
 import play.api.data.Form
-import play.api.data.Forms.{mapping, nonEmptyText}
-import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
+import play.api.data.Forms.{email, mapping, nonEmptyText}
+import play.api.i18n.Lang
 import play.api.mvc._
-import play.db.NamedDatabase
-import slick.jdbc.PostgresProfile
-import slick.jdbc.PostgresProfile.api._
 
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
+
+case class LoginForm(email: String, password: String)
 
 @Singleton
 class LoginController @Inject()
-(@NamedDatabase("shoper") protected val dbConfigProvider: DatabaseConfigProvider,
- val controllerComponents: ControllerComponents, messagesAction: MessagesActionBuilder)
-(implicit ec: ExecutionContext)
-  extends BaseController with HasDatabaseConfigProvider[PostgresProfile] {
+(val controllerComponents: ControllerComponents,
+ messagesAction: MessagesActionBuilder,
+ userRepository: UserRepository,
+ implicit val ec: DatabaseExecutionContext)
+  extends BaseController {
 
-  val logger: Logger = Logger("login")
+  val logger: Logger = Logger(getClass.getCanonicalName)
 
-  val userForm: Form[User] = Form(
+  val loginConstraints: Form[LoginForm] = Form(
     mapping(
-      "email" -> nonEmptyText,
+      "email" -> email,
       "password" -> nonEmptyText
-    )(User.apply)(User.unapply)
+    )(LoginForm.apply)(LoginForm.unapply)
   )
 
   def loginForm(): Action[AnyContent] = messagesAction {
     implicit messageRequest: MessagesRequest[AnyContent] =>
-      Ok(views.html.login(userForm))
+      Ok(views.html.login(loginConstraints))
   }
 
-  def login(): Action[User] = Action.async(parse.form(userForm)) {
+  def login(): Action[AnyContent] = Action.async {
     implicit request =>
-      val form = request.body
-      isValidLogin(form.email, form.password).map(valid => if (valid) {
-        val token = SessionDao.generateToken(form.email)
-        Redirect(routes.FrontController.index()).withSession(request.session + ("sessionToken" -> token))
-      } else {
-        Redirect(routes.LoginController.loginForm()).withNewSession
-      })
+      loginConstraints.bindFromRequest().fold(
+        formWithErrors => {
+          Future.successful(
+            BadRequest(views.html.login(formWithErrors)(request, messagesApi.preferred(Seq(Lang.defaultLang))))
+          )
+        },
+        userData => {
+          isValidLogin(userData.email, userData.password)
+            .map(valid =>
+              if (valid) {
+                logger.info(s"Successfully login user with email: [${userData.email}]")
+                val token = SessionDao.generateToken(userData.email)
+                Redirect(routes.PurchaseController.index()).withSession(request.session + ("sessionToken" -> token))
+              } else {
+                Redirect(routes.LoginController.loginForm()).withNewSession
+              }
+            )
+        }
+      )
   }
 
   private def isValidLogin(email: String, password: String): Future[Boolean] = {
     logger.info(s"Trying to login user with email: [$email]")
-    val userOpt = db.run(users.filter(user => user.email === email).result.headOption)
-    userOpt.map {
+    userRepository.findByEmail(email).map {
       case Some(user) => PasswordHelper.checkPassword(password, user.password)
       case _ => false
     }
