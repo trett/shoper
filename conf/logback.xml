@@ -33,9 +33,11 @@
 
   <logger name="play" level="INFO" />
   <logger name="application" level="DEBUG" />
-  <logger name="login" level="INFO"/>
 
-  <root level="WARN">
+<!--  <logger name="slick.jdbc.StatementInvoker.result" level="DEBUG"/>-->
+  <logger name="slick.jdbc.JdbcBackend.statement" level="DEBUG"/>
+
+  <root level="INFO">
     <appender-ref ref="ASYNCFILE" />
     <appender-ref ref="ASYNCSTDOUT" />
   </root>

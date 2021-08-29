@@ -1,7 +1,7 @@
 let requestData = {newItems: [], idsForDelete: []};
 
 function loadData() {
-    let r = jsRoutes.controllers.FrontController.loadItems();
+    let r = jsRoutes.controllers.PurchaseController.load();
     $.ajax({
         url: r.url,
         type: r.type,
@@ -59,7 +59,7 @@ function saveData() {
         .filter(item => !!item.value)
     items.forEach(el => requestData.newItems.push({name: el.value, status: "TODO"}));
     if (isRequestDataIsEmpty()) return;
-    let r = jsRoutes.controllers.FrontController.saveData(requestData);
+    let r = jsRoutes.controllers.PurchaseController.save(requestData);
     $.ajax({
         url: r.url,
         type: r.type,
@@ -68,6 +68,7 @@ function saveData() {
         success: (data) => {
             requestData.newItems.length = 0;
             requestData.idsForDelete.length = 0;
+            // addRows(data);
             loadData();
         },
         error: (data) => console.log(data)
@@ -75,7 +76,7 @@ function saveData() {
 }
 
 function updateStatus(status, id) {
-    let r = jsRoutes.controllers.FrontController.updateStatus();
+    let r = jsRoutes.controllers.PurchaseController.update();
     let done = $(`#cb-${id}`).is(':checked');
     $.ajax({
         url: r.url,
