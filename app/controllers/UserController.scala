@@ -1,7 +1,7 @@
 package controllers
 
 import controllers.helpers.AjaxHelper.PermissionCheckAction
-import controllers.helpers.{DatabaseExecutionContext, UserAction, UserRequest}
+import controllers.helpers.{DatabaseExecutionContext, PasswordHelper, UserAction, UserRequest}
 import models.{User, UserRepository}
 import play.api.Logger
 import play.api.data.Form
@@ -13,7 +13,6 @@ import play.api.mvc.{Action, AnyContent, BaseController, ControllerComponents}
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future
 
-case class UserForm(password: String, name: Option[String])
 
 @Singleton
 class UserController @Inject()
@@ -28,58 +27,90 @@ class UserController @Inject()
 
   implicit val ProfileWrites: Writes[User] = Json.writes[User]
 
-  val userConstraints: Form[UserForm] = Form(
+  val userConstraints: Form[User] = Form(
     mapping(
+      "email" -> nonEmptyText,
       "password" -> nonEmptyText,
       "name" -> optional(text)
-    )(UserForm.apply)(UserForm.unapply)
+    )(User.apply)(User.unapply)
   )
 
-  def page(): Action[AnyContent] = userAction.async {
+  def users(): Action[AnyContent] = userAction.async {
+    userRequest: UserRequest[AnyContent] => {
+      userRequest.user.flatMap(userOption => {
+        userOption.map(_ => {
+          userRepository.list().map(u => Ok(views.html.users(u)))
+        }).getOrElse(
+          Future {
+            Redirect(routes.LoginController.loginForm())
+          })
+      })
+    }
+  }
+
+  def form(): Action[AnyContent] = userAction.async {
     implicit userRequest: UserRequest[AnyContent] => {
       userRequest.user.map(userOption => {
         userOption.map(_ => {
-          Ok(views.html.user(userConstraints)(userRequest, userRequest.request.messages))
+          Ok(views.html.userForm(userConstraints)(userRequest, userRequest.request.messages))
         }).getOrElse(Redirect(routes.LoginController.loginForm()))
       })
     }
   }
 
-  def get: Action[AnyContent] = userAction.andThen(PermissionCheckAction).async(userAction.parser) {
-    userRequest: UserRequest[AnyContent] => {
-      userRequest.user.flatMap(userOption => {
+  def updateForm(): Action[AnyContent] = userAction.async {
+    implicit userRequest: UserRequest[AnyContent] => {
+      userRequest.user.map(userOption => {
         userOption.map(user => {
-          logger.info(s"Loading user with email: [${user.email}]")
-          userRepository.findByEmail(user.email).map {
-            // filter password
-            case Some(value) => Ok(Json.toJson(User(value.email, "", value.name)))
-            case None => BadRequest
-          }
-        }).getOrElse(Future {
-          Redirect(routes.LoginController.loginForm())
-        })
+          Ok(views.html.userUpdateForm(userConstraints, user.email, user.name)(userRequest, userRequest.request.messages))
+        }).getOrElse(Redirect(routes.LoginController.loginForm()))
       })
+    }
+  }
+
+  def save(): Action[AnyContent] = userAction.async(userAction.parser) {
+    implicit userRequest: UserRequest[AnyContent] => {
+      userConstraints.bindFromRequest().fold(showError(userRequest),
+        userData => {
+          userRequest.user.map(userOption => {
+            userOption.map(user => {
+              logger.info(s"Saving user with email: [${userData.email}], new name: [${userData.name}]")
+              userRepository.save(User(userData.email, PasswordHelper.hashPassword(userData.password), userData.name))
+              logger.info(s"User with email: [${user.email}] was saved")
+              Redirect(routes.UserController.users())
+            }).getOrElse(Redirect(routes.LoginController.loginForm()))
+          })
+        }
+      )
     }
   }
 
   def update(): Action[AnyContent] = userAction.async(userAction.parser) {
     implicit userRequest: UserRequest[AnyContent] => {
-      userConstraints.bindFromRequest().fold(
-        formWithErrors => {
-          Future.successful(
-            BadRequest(views.html.user(formWithErrors)(userRequest.request, messagesApi.preferred(Seq(Lang.defaultLang))))
-          )
-        },
+      userConstraints.bindFromRequest().fold(showError(userRequest),
         userData => {
           userRequest.user.map(userOption => {
             userOption.map(user => {
-              logger.info(s"Updating user with email: [${user.email}], new name: [${user.name}]")
-              userRepository.updatePassword(user.email, userData.password)
-              logger.info(s"End of updating user with email: [${user.email}]")
-              Redirect(routes.UserController.page())
+              logger.info(s"Updating user with email: [${userData.email}], new name: [${userData.name}]")
+              // check email belong to user session
+              if (user.email != userData.email) {
+                throw new RuntimeException("Error")
+              }
+              userRepository.update(User(user.email, PasswordHelper.hashPassword(userData.password), userData.name))
+              logger.info(s"User with email: [${user.email}] was updated")
+              Redirect(routes.UserController.users())
             }).getOrElse(Redirect(routes.LoginController.loginForm()))
           })
         }
+      )
+    }
+  }
+
+  private def showError(userRequest: UserRequest[AnyContent]) = {
+    formWithErrors: Form[User] => {
+      Future.successful(
+        BadRequest(views.html.userForm(formWithErrors)
+        (userRequest.request, messagesApi.preferred(Seq(Lang.defaultLang))))
       )
     }
   }

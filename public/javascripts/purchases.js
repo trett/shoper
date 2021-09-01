@@ -22,21 +22,21 @@ function addRow(id, name, status) {
     let todo = status === "TODO";
     let done = status === "DONE";
     let saved = todo || done;
-    let inp = $('<input>').attr({
-        type: 'text',
+    let inp = $('<textarea>').attr({
+        // type: 'text',
         id: status + "-" + id,
-        value: name,
+        rows: 2,
         class: 'form-control',
         placeholder: 'Product'
-    }).prop('disabled', saved);
-    let ig = $('<div>').attr({class: 'input-group'});
+    }).val(name).prop('disabled', saved)
+    let ig = $('<div>').attr({class: 'input-group mb-2'});
     $('#purchaseList').append(ig);
     ig.append(inp);
     if (saved) {
         ig.attr({id: 'ig-' + id});
         ig.prepend("<div class='input-group-prepend'><div class='input-group-text'>" +
             `<input type='checkbox' id='cb-${id}' aria-label='Mark as done'></div></div>`);
-        ig.append("<div class='input-group-append'><button class='btn btn-outline-danger' " +
+        ig.append("<div class='input-group-append'><button class='btn btn-outline-secondary' " +
             `type='button' id='db-${id}'><i class='fas fa-trash'></i></button></div>`);
         $('#db-' + id).click(() => deleteItem(id));
         $('#cb-' + id).click(() => updateStatus(status, id)).prop('checked', done);
@@ -68,7 +68,6 @@ function saveData() {
         success: (data) => {
             requestData.newItems.length = 0;
             requestData.idsForDelete.length = 0;
-            // addRows(data);
             loadData();
         },
         error: (data) => console.log(data)

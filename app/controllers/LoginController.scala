@@ -47,7 +47,7 @@ class LoginController @Inject()
           isValidLogin(userData.email, userData.password)
             .map(valid =>
               if (valid) {
-                logger.info(s"Successfully login user with email: [${userData.email}]")
+                logger.info(s"Successfully login userForm with email: [${userData.email}]")
                 val token = SessionDao.generateToken(userData.email)
                 Redirect(routes.PurchaseController.index()).withSession(request.session + ("sessionToken" -> token))
               } else {
@@ -59,7 +59,7 @@ class LoginController @Inject()
   }
 
   private def isValidLogin(email: String, password: String): Future[Boolean] = {
-    logger.info(s"Trying to login user with email: [$email]")
+    logger.info(s"Trying to login userForm with email: [$email]")
     userRepository.findByEmail(email).map {
       case Some(user) => PasswordHelper.checkPassword(password, user.password)
       case _ => false

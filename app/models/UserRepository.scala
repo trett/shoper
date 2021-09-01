@@ -19,7 +19,7 @@ class UserRepository @Inject()(@NamedDatabase("shoper") dbConfigProvider: Databa
 
   private val users = TableQuery[UsersTable]
 
-  def addUser(user: User): Future[Int] = db.run {
+  def save(user: User): Future[Int] = db.run {
     users += user
   }
 
@@ -27,9 +27,8 @@ class UserRepository @Inject()(@NamedDatabase("shoper") dbConfigProvider: Databa
     users.result
   }
 
-  def updatePassword(email: String, password: String): Future[Int] = db.run {
-    (for {user <- users if user.email === email} yield user.password)
-      .update(PasswordHelper.hashPassword(password))
+  def update(user: User): Future[Int] = db.run {
+    (for {u <- users if u.email === user.email} yield u).update(user)
   }
 
   def findByEmail(email: String): Future[Option[User]] = db.run {

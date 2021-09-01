@@ -90,7 +90,9 @@ class PurchaseController @Inject()
               .info(s"Start updating purchases: new: [${items.newItems}], delete: [${items.idsForDelete}]")
             Await.result(Future.sequence(List(
               purchaseRepository.batchInsert(items.newItems),
-              purchaseRepository.batchDelete(items.idsForDelete))), Duration.Inf)
+              purchaseRepository.batchDelete(items.idsForDelete))),
+              Duration.Inf
+            )
             logger
               .info(s"End of updating purchases:new: [${items.newItems}], delete: [${items.idsForDelete}]")
             Created
