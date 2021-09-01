@@ -34,12 +34,15 @@ function addRow(id, name, status) {
     ig.append(inp);
     if (saved) {
         ig.attr({id: 'ig-' + id});
-        ig.prepend("<div class='input-group-prepend'><div class='input-group-text'>" +
-            `<input type='checkbox' id='cb-${id}' aria-label='Mark as done'></div></div>`);
+        ig.prepend(`<div class='input-group-prepend' id='ipg-${id}'><div class='input-group-text'>` +
+            `<button class="btn btn-outline-secondary" type="button" id='cb-${id}'>Done</button></div></div>`);
+        // `<input type='checkbox' id='cb-${id}' aria-label='Mark as done'></div></div>`);
         ig.append("<div class='input-group-append'><button class='btn btn-outline-secondary' " +
             `type='button' id='db-${id}'><i class='fas fa-trash'></i></button></div>`);
         $('#db-' + id).click(() => deleteItem(id));
-        $('#cb-' + id).click(() => updateStatus(status, id)).prop('checked', done);
+        $('#cb-' + id).click(() => updateStatus(status, id))
+            .text(done ? "Undo" : "Done")
+            .addClass(done ? 'btn-outline-secondary' : "btn-outline-success");
         if (done) {
             inp.css('text-decoration', 'line-through');
         }
@@ -54,7 +57,7 @@ function deleteItem(id) {
 }
 
 function saveData() {
-    let items = $('#purchaseList :input[type=text]').toArray()
+    let items = $('#purchaseList textarea').toArray()
         .filter(item => item.id.split('-')[0] === "NEW")
         .filter(item => !!item.value)
     items.forEach(el => requestData.newItems.push({name: el.value, status: "TODO"}));
@@ -76,7 +79,8 @@ function saveData() {
 
 function updateStatus(status, id) {
     let r = jsRoutes.controllers.PurchaseController.update();
-    let done = $(`#cb-${id}`).is(':checked');
+    let source = $(`#cb-${id}`);
+    let done = source.text() === "Done";
     $.ajax({
         url: r.url,
         type: r.type,
@@ -84,10 +88,13 @@ function updateStatus(status, id) {
         contentType: "application/json",
         success: (data) => {
             if (done) {
-                $(`#${status}-${id}`).css('text-decoration', 'line-through')
+                $(`#${status}-${id}`).css('text-decoration', 'line-through');
             } else {
-                $(`#${status}-${id}`).css('text-decoration', '')
+                $(`#${status}-${id}`).css('text-decoration', '');
             }
+            source.text(done ? "Undo" : "Done");
+            source.removeClass("btn-outline-success btn-outline-secondary");
+            source.addClass(done ? 'btn-outline-secondary' : "btn-outline-success");
         }
     })
 }
