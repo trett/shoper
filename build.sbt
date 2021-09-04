@@ -12,6 +12,7 @@ resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repos
 libraryDependencies += guice
 libraryDependencies += "org.webjars" % "jquery" % "3.6.0"
 libraryDependencies += "com.adrianhurt" %% "play-bootstrap" % "1.6.1-P28-B4"
+libraryDependencies += "org.webjars.npm" % "mustache" % "4.2.0"
 libraryDependencies += "org.webjars" % "bootstrap" % "4.6.0-1"
 libraryDependencies += "org.webjars" % "font-awesome" % "5.15.3"
 libraryDependencies += "org.postgresql" % "postgresql" % "42.2.23"

@@ -1,4 +1,3 @@
-<!-- https://www.playframework.com/documentation/latest/SettingsLogger -->
 <configuration>
 
   <conversionRule conversionWord="coloredLevel" converterClass="play.api.libs.logback.ColoredLevel" />
@@ -23,9 +22,9 @@
     </encoder>
   </appender>
 
-  <appender name="ASYNCFILE" class="ch.qos.logback.classic.AsyncAppender">
-    <appender-ref ref="FILE" />
-  </appender>
+<!--  <appender name="ASYNCFILE" class="ch.qos.logback.classic.AsyncAppender">-->
+<!--    <appender-ref ref="FILE" />-->
+<!--  </appender>-->
 
   <appender name="ASYNCSTDOUT" class="ch.qos.logback.classic.AsyncAppender">
     <appender-ref ref="STDOUT" />
@@ -38,7 +37,7 @@
   <logger name="slick.jdbc.JdbcBackend.statement" level="DEBUG"/>
 
   <root level="INFO">
-    <appender-ref ref="ASYNCFILE" />
+<!--    <appender-ref ref="ASYNCFILE" />-->
     <appender-ref ref="ASYNCSTDOUT" />
   </root>
 

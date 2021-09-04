@@ -6,48 +6,51 @@ function loadData() {
         url: r.url,
         type: r.type,
         contentType: "application/json",
-        success: (data) => addRows(data),
+        success: (data) => renderRows(data),
         error: (data) => console.error(data),
         dataType: "json"
     });
     disableSaveButton(true);
 }
 
-function addRows(rows) {
-    $('#purchaseList').empty();
-    rows.forEach(row => addRow(row.id, row.name, row.status));
+function renderRows(data) {
+    fetch('/assets/templates/purchase.mustache')
+        .then((response) => response.text())
+        .then((template) => {
+            const rendered = Mustache.render(template, {
+                'items': data,
+                'buttonText': function () {
+                    return getButtonText(this.status);
+                },
+                'buttonColor': function () {
+                    return getButtonColor(this.status);
+                }
+            });
+            document.getElementById('purchaseList').innerHTML = rendered;
+        }).then(() => {
+        $('#purchaseList .input-group-prepend').toArray().forEach(item => {
+            const id = item.id.split("-")[1];
+            if (!id) {
+                return;
+            }
+            // update decoration
+            strike(id, $('#ta-' + id).data('status'));
+            // add event handlers
+            $('#cb-' + id).click(() => updateStatus(item.innerText, id));
+            $('#db-' + id).click(() => deleteItem(Number(id)));
+        })
+    })
 }
 
-function addRow(id, name, status) {
-    let todo = status === "TODO";
-    let done = status === "DONE";
-    let saved = todo || done;
-    let inp = $('<textarea>').attr({
-        // type: 'text',
-        id: status + "-" + id,
+function addRow() {
+    const row = $('<textarea>').attr({
+        'data-status': "NEW",
         rows: 2,
         class: 'form-control',
         placeholder: 'Product'
-    }).val(name).prop('disabled', saved)
-    let ig = $('<div>').attr({class: 'input-group mb-2'});
-    $('#purchaseList').append(ig);
-    ig.append(inp);
-    if (saved) {
-        ig.attr({id: 'ig-' + id});
-        ig.prepend(`<div class='input-group-prepend' id='ipg-${id}'><div class='input-group-text'>` +
-            `<button class="btn btn-outline-secondary" type="button" id='cb-${id}'>Done</button></div></div>`);
-        // `<input type='checkbox' id='cb-${id}' aria-label='Mark as done'></div></div>`);
-        ig.append("<div class='input-group-append'><button class='btn btn-outline-secondary' " +
-            `type='button' id='db-${id}'><i class='fas fa-trash'></i></button></div>`);
-        $('#db-' + id).click(() => deleteItem(id));
-        $('#cb-' + id).click(() => updateStatus(status, id))
-            .text(done ? "Undo" : "Done")
-            .addClass(done ? 'btn-outline-secondary' : "btn-outline-success");
-        if (done) {
-            inp.css('text-decoration', 'line-through');
-        }
-    }
-    disableSaveButton(saved);
+    })
+    $('#purchaseList').append(row);
+    disableSaveButton(false);
 }
 
 function deleteItem(id) {
@@ -58,7 +61,7 @@ function deleteItem(id) {
 
 function saveData() {
     let items = $('#purchaseList textarea').toArray()
-        .filter(item => item.id.split('-')[0] === "NEW")
+        .filter(item => item.dataset.status === "NEW")
         .filter(item => !!item.value)
     items.forEach(el => requestData.newItems.push({name: el.value, status: "TODO"}));
     if (isRequestDataIsEmpty()) return;
@@ -80,21 +83,16 @@ function saveData() {
 function updateStatus(status, id) {
     let r = jsRoutes.controllers.PurchaseController.update();
     let source = $(`#cb-${id}`);
-    let done = source.text() === "Done";
     $.ajax({
         url: r.url,
         type: r.type,
-        data: `{"id": ${id}, "status": "${done ? 'DONE' : 'TODO'}"}`,
+        data: `{"id": ${id}, "status": "${status}"}`,
         contentType: "application/json",
         success: (data) => {
-            if (done) {
-                $(`#${status}-${id}`).css('text-decoration', 'line-through');
-            } else {
-                $(`#${status}-${id}`).css('text-decoration', '');
-            }
-            source.text(done ? "Undo" : "Done");
+            strike(id, status);
+            source.text(getButtonText(status));
             source.removeClass("btn-outline-success btn-outline-secondary");
-            source.addClass(done ? 'btn-outline-secondary' : "btn-outline-success");
+            source.addClass(getButtonColor(status));
         }
     })
 }
@@ -105,6 +103,18 @@ function disableSaveButton(disabled) {
 
 function isRequestDataIsEmpty() {
     return requestData.newItems.length < 1 && requestData.idsForDelete.length < 1;
+}
+
+function strike(id, status) {
+    $(`#ta-${id}`).css('text-decoration', status === "DONE" ? 'line-through' : 'none');
+}
+
+function getButtonText(status) {
+    return status === "DONE" ? "TODO" : "DONE";
+}
+
+function getButtonColor(status) {
+    return status === "DONE" ? "btn-outline-secondary" : "btn-outline-success";
 }
 
 export {loadData, addRow, saveData};
