@@ -1,6 +1,6 @@
 package controllers
 
-import controllers.helpers.AjaxHelper.PermissionCheckAction
+import controllers.helpers.RequestHelper.{PermissionCheckAction, process}
 import controllers.helpers.{DatabaseExecutionContext, UserAction, UserRequest}
 import models.{Purchase, PurchaseRepository}
 import play.api.Logger
@@ -44,10 +44,9 @@ class PurchaseController @Inject()
 
   def index(): Action[AnyContent] = userAction.async {
     userRequest: UserRequest[AnyContent] =>
-      userRequest.user.map(userOption =>
-        userOption.map(user => Ok(views.html.index(user)(userRequest.request))
-        ).getOrElse(Redirect(routes.LoginController.loginForm()))
-      )
+      userRequest.user.map(process {
+        user => Ok(views.html.index(user)(userRequest.request))
+      })
   }
 
   def load(): Action[AnyContent] = userAction.andThen(PermissionCheckAction).async(userAction.parser) {

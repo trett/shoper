@@ -1,14 +1,14 @@
 package controllers
 
-import controllers.helpers.AjaxHelper.PermissionCheckAction
+import controllers.helpers.RequestHelper.{process, showError}
 import controllers.helpers.{DatabaseExecutionContext, PasswordHelper, UserAction, UserRequest}
 import models.{User, UserRepository}
 import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms.{mapping, nonEmptyText, optional, text}
-import play.api.i18n.{I18nSupport, Lang}
+import play.api.i18n.I18nSupport
 import play.api.libs.json.{Json, Writes}
-import play.api.mvc.{Action, AnyContent, BaseController, ControllerComponents}
+import play.api.mvc._
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future
@@ -41,56 +41,54 @@ class UserController @Inject()
         userOption.map(_ => {
           userRepository.list().map(u => Ok(views.html.users(u)))
         }).getOrElse(
-          Future {
-            Redirect(routes.LoginController.loginForm())
-          })
+          Future.successful(Redirect(routes.LoginController.loginForm())))
       })
     }
   }
 
   def form(): Action[AnyContent] = userAction.async {
     implicit userRequest: UserRequest[AnyContent] => {
-      userRequest.user.map(userOption => {
-        userOption.map(_ => {
+      userRequest.user.map(process {
+        _ =>
           Ok(views.html.userForm(userConstraints)(userRequest, userRequest.request.messages))
-        }).getOrElse(Redirect(routes.LoginController.loginForm()))
       })
     }
   }
 
   def updateForm(): Action[AnyContent] = userAction.async {
     implicit userRequest: UserRequest[AnyContent] => {
-      userRequest.user.map(userOption => {
-        userOption.map(user => {
-          Ok(views.html.userUpdateForm(userConstraints, user.email, user.name)(userRequest, userRequest.request.messages))
-        }).getOrElse(Redirect(routes.LoginController.loginForm()))
+      userRequest.user.map(process {
+        user =>
+          Ok(views
+            .html
+            .userUpdateForm(userConstraints, user.email, user.name)(userRequest, userRequest.request.messages)
+          )
       })
     }
   }
 
   def save(): Action[AnyContent] = userAction.async(userAction.parser) {
     implicit userRequest: UserRequest[AnyContent] => {
-      userConstraints.bindFromRequest().fold(showError(userRequest),
+      userConstraints.bindFromRequest().fold(showError(userRequest, messagesApi),
         userData => {
-          userRequest.user.map(userOption => {
-            userOption.map(user => {
+          userRequest.user.map(process {
+            user =>
               logger.info(s"Saving user with email: [${userData.email}], new name: [${userData.name}]")
               userRepository.save(User(userData.email, PasswordHelper.hashPassword(userData.password), userData.name))
               logger.info(s"User with email: [${user.email}] was saved")
               Redirect(routes.UserController.users())
-            }).getOrElse(Redirect(routes.LoginController.loginForm()))
           })
-        }
-      )
+        })
     }
   }
 
+
   def update(): Action[AnyContent] = userAction.async(userAction.parser) {
     implicit userRequest: UserRequest[AnyContent] => {
-      userConstraints.bindFromRequest().fold(showError(userRequest),
+      userConstraints.bindFromRequest().fold(showError(userRequest, messagesApi),
         userData => {
-          userRequest.user.map(userOption => {
-            userOption.map(user => {
+          userRequest.user.map(process {
+            user =>
               logger.info(s"Updating user with email: [${userData.email}], new name: [${userData.name}]")
               // check email belong to user session
               if (user.email != userData.email) {
@@ -99,18 +97,8 @@ class UserController @Inject()
               userRepository.update(User(user.email, PasswordHelper.hashPassword(userData.password), userData.name))
               logger.info(s"User with email: [${user.email}] was updated")
               Redirect(routes.UserController.users())
-            }).getOrElse(Redirect(routes.LoginController.loginForm()))
           })
         }
-      )
-    }
-  }
-
-  private def showError(userRequest: UserRequest[AnyContent]) = {
-    formWithErrors: Form[User] => {
-      Future.successful(
-        BadRequest(views.html.userForm(formWithErrors)
-        (userRequest.request, messagesApi.preferred(Seq(Lang.defaultLang))))
       )
     }
   }

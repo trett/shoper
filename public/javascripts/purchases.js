@@ -1,7 +1,7 @@
-let requestData = {newItems: [], idsForDelete: []};
+const requestData = {newItems: [], idsForDelete: []};
 
 function loadData() {
-    let r = jsRoutes.controllers.PurchaseController.load();
+    const r = jsRoutes.controllers.PurchaseController.load();
     $.ajax({
         url: r.url,
         type: r.type,
@@ -60,12 +60,12 @@ function deleteItem(id) {
 }
 
 function saveData() {
-    let items = $('#purchaseList textarea').toArray()
+    const items = $('#purchaseList textarea').toArray()
         .filter(item => item.dataset.status === "NEW")
         .filter(item => !!item.value)
     items.forEach(el => requestData.newItems.push({name: el.value, status: "TODO"}));
     if (isRequestDataIsEmpty()) return;
-    let r = jsRoutes.controllers.PurchaseController.save(requestData);
+    const r = jsRoutes.controllers.PurchaseController.save(requestData);
     $.ajax({
         url: r.url,
         type: r.type,
@@ -81,8 +81,8 @@ function saveData() {
 }
 
 function updateStatus(status, id) {
-    let r = jsRoutes.controllers.PurchaseController.update();
-    let source = $(`#cb-${id}`);
+    const r = jsRoutes.controllers.PurchaseController.update();
+    const source = $(`#cb-${id}`);
     $.ajax({
         url: r.url,
         type: r.type,
