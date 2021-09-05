@@ -1,19 +1,19 @@
 package controllers
 
-import controllers.helpers.RequestHelper.{PermissionCheckAction, process}
+import controllers.helpers.RequestHelper.{PermissionCheckAction, REDIRECT_TO_LOGIN, process, jsonErrors}
 import controllers.helpers.{DatabaseExecutionContext, UserAction, UserRequest}
-import models.{Purchase, PurchaseRepository}
+import models.{Purchase, PurchaseDTO, PurchaseRepository, User}
 import play.api.Logger
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
-import play.api.libs.json.Reads.pure
 import play.api.libs.json._
 import play.api.mvc._
 
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import javax.inject._
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 
-case class PurchaseRequest(newItems: Seq[Purchase], idsForDelete: Seq[Long])
+case class PurchaseRequest(newItems: Seq[PurchaseDTO], idsForDelete: Seq[Long])
 
 case class UpdateRequest(id: Long, status: String)
 
@@ -26,17 +26,21 @@ class PurchaseController @Inject()
   extends BaseController {
 
   val logger: Logger = Logger(getClass.getCanonicalName)
+  val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
 
-  implicit val purchasesWrites: Writes[Purchase] = Json.writes[Purchase]
+  implicit val customLocalDateTimeWrites: Writes[LocalDateTime] = (o: LocalDateTime) => JsString(formatter.format(o))
+  implicit val purchasesWrites: Writes[PurchaseDTO] = Json.writes[PurchaseDTO]
 
-  implicit val purchaseReads: Reads[Purchase] = (
-    (JsPath \ "id").read[Long].orElse(pure(0)) and
+  implicit val purchaseReads: Reads[PurchaseDTO] = (
+    (JsPath \ "id").readNullable[Long] and
       (JsPath \ "name").read[String] and
-      (JsPath \ "status").read[String]
-    ) (Purchase.apply _)
+      (JsPath \ "status").read[String] and
+      (JsPath \ "createdAt").readNullable[LocalDateTime] and
+      (JsPath \ "userName").readNullable[String]
+    ) (PurchaseDTO.apply _)
 
   implicit val purchaseRequestReads: Reads[PurchaseRequest] = (
-    (JsPath \ "newItems").read[Seq[Purchase]] and
+    (JsPath \ "newItems").read[Seq[PurchaseDTO]] and
       (JsPath \ "idsForDelete").read[Seq[Long]]
     ) (PurchaseRequest.apply _)
 
@@ -59,43 +63,39 @@ class PurchaseController @Inject()
       }
   }
 
-  def update(): Action[JsValue] = userAction(parse.json).andThen(PermissionCheckAction) {
+  def update(): Action[JsValue] = userAction.andThen(PermissionCheckAction).async(parse.json) {
     userRequest: UserRequest[JsValue] =>
       userRequest.request.body.validate[UpdateRequest]
-        .fold(
-          errors => {
-            BadRequest(Json.obj("message" -> JsError.toJson(errors)))
-          },
+        .fold(jsonErrors(),
           updateRequest => {
             logger
               .info(s"Start updating purchase: [id: ${updateRequest.id}, status: ${updateRequest.status}]")
-            purchaseRepository.update(updateRequest.id, updateRequest.status)
-            logger
-              .info(s"End of updating purchase: [id: ${updateRequest.id}, status: ${updateRequest.status}]")
-            Ok
+            purchaseRepository.update(updateRequest.id, updateRequest.status).map(_ => Created)
           }
         )
   }
 
-  def save(): Action[JsValue] = userAction(parse.json).andThen(PermissionCheckAction) {
+  def save(): Action[JsValue] = userAction.andThen(PermissionCheckAction).async(parse.json) {
     userRequest: UserRequest[JsValue] =>
       userRequest.request.body.validate[PurchaseRequest]
-        .fold(
-          errors => {
-            BadRequest(Json.obj("message" -> JsError.toJson(errors)))
-          },
+        .fold(jsonErrors(),
           items => {
             logger
               .info(s"Start updating purchases: new: [${items.newItems}], delete: [${items.idsForDelete}]")
-            Await.result(Future.sequence(List(
-              purchaseRepository.batchInsert(items.newItems),
-              purchaseRepository.batchDelete(items.idsForDelete))),
-              Duration.Inf
-            )
-            logger
-              .info(s"End of updating purchases:new: [${items.newItems}], delete: [${items.idsForDelete}]")
-            Created
+            userRequest.user.map(userOpt =>
+              userOpt.map(user => processPurchaseRequest(items, user).map(_ => Created))
+            ).map(_ => REDIRECT_TO_LOGIN)
           }
         )
+  }
+
+  private def processPurchaseRequest(items: PurchaseRequest, user: User) = {
+    val purchases = items.newItems.map {
+      item => Purchase(0, item.name, item.status, item.createdAt.getOrElse(LocalDateTime.now()), Some(user.id))
+    }
+    Future.sequence(List(
+      purchaseRepository.batchInsert(purchases),
+      purchaseRepository.batchDelete(items.idsForDelete))
+    )
   }
 }
