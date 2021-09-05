@@ -5,7 +5,6 @@
 
     @main("Profile") {
         @menu {
-            @helper.javascriptRouter("jsRoutes")(routes.javascript.UserController.update)
             <div>
             @b4.formCSRF(routes.UserController.update(), Symbol("class") -> "mt-4") {
                 @b4.text(userConstraints("email"),
@@ -20,6 +19,7 @@
                     Symbol("_label") -> "Name",
                     Symbol("placeholder") -> "Your Name",
                     Symbol("value") -> name.getOrElse(""))
+                @b4.hidden(userConstraints("id"))
                 @b4.buttonType("submit", Symbol("class") -> "btn btn-primary") {
                     <i class="fas fa-save"></i> Save }
             }

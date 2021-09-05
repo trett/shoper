@@ -5,7 +5,7 @@ import controllers.helpers.{DatabaseExecutionContext, PasswordHelper, UserAction
 import models.{User, UserRepository}
 import play.api.Logger
 import play.api.data.Form
-import play.api.data.Forms.{mapping, nonEmptyText, optional, text}
+import play.api.data.Forms._
 import play.api.i18n.I18nSupport
 import play.api.libs.json.{Json, Writes}
 import play.api.mvc._
@@ -29,6 +29,7 @@ class UserController @Inject()
 
   val userConstraints: Form[User] = Form(
     mapping(
+      "id" -> longNumber,
       "email" -> nonEmptyText,
       "password" -> nonEmptyText,
       "name" -> optional(text)
@@ -57,13 +58,11 @@ class UserController @Inject()
 
   def updateForm(): Action[AnyContent] = userAction.async {
     implicit userRequest: UserRequest[AnyContent] => {
-      userRequest.user.map(process {
-        user =>
-          Ok(views
-            .html
-            .userUpdateForm(userConstraints, user.email, user.name)(userRequest, userRequest.request.messages)
-          )
-      })
+      userRequest.user.map(
+        process { user =>
+          Ok(views.html.userUpdateForm(userConstraints, user.email, user.name)
+          (userRequest, userRequest.request.messages))
+        })
     }
   }
 
@@ -74,7 +73,9 @@ class UserController @Inject()
           userRequest.user.map(process {
             user =>
               logger.info(s"Saving user with email: [${userData.email}], new name: [${userData.name}]")
-              userRepository.save(User(userData.email, PasswordHelper.hashPassword(userData.password), userData.name))
+              userRepository.save(
+                User(0, userData.email, PasswordHelper.hashPassword(userData.password), userData.name)
+              )
               logger.info(s"User with email: [${user.email}] was saved")
               Redirect(routes.UserController.users())
           })
@@ -94,7 +95,9 @@ class UserController @Inject()
               if (user.email != userData.email) {
                 throw new RuntimeException("Error")
               }
-              userRepository.update(User(user.email, PasswordHelper.hashPassword(userData.password), userData.name))
+              userRepository.update(
+                User(user.id, user.email, PasswordHelper.hashPassword(userData.password), userData.name)
+              )
               logger.info(s"User with email: [${user.email}] was updated")
               Redirect(routes.UserController.users())
           })
