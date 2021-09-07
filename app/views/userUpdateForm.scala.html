@@ -19,7 +19,7 @@
                     Symbol("_label") -> "Name",
                     Symbol("placeholder") -> "Your Name",
                     Symbol("value") -> name.getOrElse(""))
-                @b4.hidden(userConstraints("id"))
+                @b4.hidden(userConstraints("id"), Symbol("value") -> 0)
                 @b4.buttonType("submit", Symbol("class") -> "btn btn-primary") {
                     <i class="fas fa-save"></i> Save }
             }
