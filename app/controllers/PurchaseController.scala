@@ -82,11 +82,10 @@ class PurchaseController @Inject()
           items => {
             logger
               .info(s"Start updating purchases: new: [${items.newItems}], delete: [${items.idsForDelete}]")
-            userRequest.user.map(userOpt =>
-              userOpt.map(user => processPurchaseRequest(items, user).map(_ => Created))
-            ).map(_ => REDIRECT_TO_LOGIN)
-          }
-        )
+            userRequest.user.flatMap(userOpt =>
+              processPurchaseRequest(items, userOpt.getOrElse(throw new RuntimeException("System error")))
+              .map(_ => Created))
+          })
   }
 
   private def processPurchaseRequest(items: PurchaseRequest, user: User) = {

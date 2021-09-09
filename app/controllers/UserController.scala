@@ -1,6 +1,6 @@
 package controllers
 
-import controllers.helpers.RequestHelper.{process, showError}
+import controllers.helpers.RequestHelper.{process, futureProcess, showError, REDIRECT_TO_LOGIN}
 import controllers.helpers.{DatabaseExecutionContext, PasswordHelper, UserAction, UserRequest}
 import models.{User, UserRepository}
 import play.api.Logger
@@ -41,8 +41,7 @@ class UserController @Inject()
       userRequest.user.flatMap(userOption => {
         userOption.map(_ => {
           userRepository.list().map(u => Ok(views.html.users(u)))
-        }).getOrElse(
-          Future.successful(Redirect(routes.LoginController.loginForm())))
+        }).getOrElse(Future.successful(REDIRECT_TO_LOGIN))
       })
     }
   }
@@ -58,51 +57,47 @@ class UserController @Inject()
 
   def updateForm(): Action[AnyContent] = userAction.async {
     implicit userRequest: UserRequest[AnyContent] => {
-      userRequest.user.map(
-        process { user =>
+      userRequest.user.map(process {
+        user =>
           Ok(views.html.userUpdateForm(userConstraints, user.email, user.name)
           (userRequest, userRequest.request.messages))
         })
     }
   }
 
-  def save(): Action[AnyContent] = userAction.async(userAction.parser) {
-    implicit userRequest: UserRequest[AnyContent] => {
-      userConstraints.bindFromRequest().fold(showError(userRequest, messagesApi),
-        userData => {
-          userRequest.user.map(process {
-            user =>
-              logger.info(s"Saving user with email: [${userData.email}], new name: [${userData.name}]")
-              userRepository.save(
-                User(0, userData.email, PasswordHelper.hashPassword(userData.password), userData.name)
-              )
-              logger.info(s"User with email: [${user.email}] was saved")
-              Redirect(routes.UserController.users())
+    def save(): Action[AnyContent] = userAction.async {
+      implicit userRequest: UserRequest[AnyContent] => {
+        userConstraints.bindFromRequest().fold(showError(userRequest, messagesApi),
+          userData => {
+            userRequest.user.flatMap( 
+              futureProcess {
+                user =>
+                logger.info(s"Saving user with email: [${userData.email}], new name: [${userData.name}]")
+                val newUser = User(0, userData.email, PasswordHelper.hashPassword(userData.password), userData.name)
+                userRepository.save(newUser).map(_ => Redirect(routes.UserController.users()))
+              })
           })
-        })
+      }
     }
-  }
 
 
   def update(): Action[AnyContent] = userAction.async(userAction.parser) {
     implicit userRequest: UserRequest[AnyContent] => {
       userConstraints.bindFromRequest().fold(showError(userRequest, messagesApi),
         userData => {
-          userRequest.user.map(process {
-            user =>
-              logger.info(s"Updating user with email: [${userData.email}], new name: [${userData.name}]")
-              // check email belong to user session
-              if (user.email != userData.email) {
-                throw new RuntimeException("Error")
-              }
-              userRepository.update(
-                User(user.id, user.email, PasswordHelper.hashPassword(userData.password), userData.name)
-              )
-              logger.info(s"User with email: [${user.email}] was updated")
-              Redirect(routes.UserController.users())
-          })
-        }
-      )
+          userRequest.user.flatMap(
+            futureProcess {
+              user =>
+                logger.info(s"Updating user with email: [${userData.email}], new name: [${userData.name}]")
+                // check email belong to user session
+                if (user.email != userData.email) {
+                  throw new RuntimeException("Error")
+                }
+                val updatedUser =
+                  User(user.id, user.email,PasswordHelper.hashPassword(userData.password), userData.name)
+                userRepository.update(updatedUser).map(_ => Redirect(routes.UserController.users()))
+            })
+        })
     }
   }
 }

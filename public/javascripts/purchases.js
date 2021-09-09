@@ -1,15 +1,11 @@
-const requestData = {newItems: [], idsForDelete: []};
+const requestData = { newItems: [], idsForDelete: [] };
 
 function loadData() {
     const r = jsRoutes.controllers.PurchaseController.load();
-    $.ajax({
-        url: r.url,
-        type: r.type,
-        contentType: "application/json",
-        success: (data) => renderRows(data),
-        error: (data) => console.error(data),
-        dataType: "json"
-    });
+    fetch(r.url)
+        .then(response => response.json())
+        .then(data => renderRows(data))
+        .catch(err => console.log(err));
     disableSaveButton(true);
 }
 
@@ -28,18 +24,18 @@ function renderRows(data) {
             });
             document.getElementById('purchaseList').innerHTML = rendered;
         }).then(() => {
-        $('#purchaseList .input-group-prepend').toArray().forEach(item => {
-            const id = item.id.split("-")[1];
-            if (!id) {
-                return;
-            }
-            // update decoration
-            strike(id, $('#ta-' + id).data('status'));
-            // add event handlers
-            $('#cb-' + id).click(() => updateStatus(item.innerText, id));
-            $('#db-' + id).click(() => deleteItem(Number(id)));
+            $('#purchaseList .input-group-prepend').toArray().forEach(item => {
+                const id = item.id.split("-")[1];
+                if (!id) {
+                    return;
+                }
+                // update decoration
+                strike(id, $('#ta-' + id).data('status'));
+                // add event handlers
+                $('#cb-' + id).click(() => updateStatus(item.innerText, id));
+                $('#db-' + id).click(() => deleteItem(Number(id)));
+            })
         })
-    })
 }
 
 function addRow() {
@@ -55,7 +51,8 @@ function addRow() {
 
 function deleteItem(id) {
     requestData.idsForDelete.push(id);
-    $('#ig-' + id).remove();
+    const el = $('#purchase-' + id);
+    el.hide('slow', () => el.remove());
     disableSaveButton(false);
 }
 
@@ -63,38 +60,37 @@ function saveData() {
     const items = $('#purchaseList textarea').toArray()
         .filter(item => item.dataset.status === "NEW")
         .filter(item => !!item.value)
-    items.forEach(el => requestData.newItems.push({name: el.value, status: "TODO"}));
+    items.forEach(el => requestData.newItems.push({ name: el.value, status: "TODO" }));
     if (isRequestDataIsEmpty()) return;
     const r = jsRoutes.controllers.PurchaseController.save(requestData);
-    $.ajax({
-        url: r.url,
-        type: r.type,
-        data: JSON.stringify(requestData),
-        contentType: "application/json",
-        success: (data) => {
-            requestData.newItems.length = 0;
-            requestData.idsForDelete.length = 0;
-            loadData();
+    fetch(r.url, {
+        method: r.type,
+        headers: {
+            'Content-Type': 'application/json;charset=utf-8'
         },
-        error: (data) => console.log(data)
-    });
+        body: JSON.stringify(requestData)
+    }).then(response => {
+        requestData.newItems.length = 0;
+        requestData.idsForDelete.length = 0;
+        loadData();
+    }).catch(err => console.log(err));
 }
 
 function updateStatus(status, id) {
     const r = jsRoutes.controllers.PurchaseController.update();
     const source = $(`#cb-${id}`);
-    $.ajax({
-        url: r.url,
-        type: r.type,
-        data: `{"id": ${id}, "status": "${status}"}`,
-        contentType: "application/json",
-        success: (data) => {
-            strike(id, status);
-            source.text(getButtonText(status));
-            source.removeClass("btn-outline-success btn-outline-secondary");
-            source.addClass(getButtonColor(status));
-        }
-    })
+    fetch(r.url, {
+        method: r.type,
+        headers: {
+            'Content-Type': 'application/json;charset=utf-8'
+        },
+        body: `{"id": ${id}, "status": "${status}"}`
+    }).then(response => {
+        strike(id, status);
+        source.text(getButtonText(status));
+        source.removeClass("btn-outline-success btn-outline-secondary");
+        source.addClass(getButtonColor(status));
+    }).catch(err => console.log(err));
 }
 
 function disableSaveButton(disabled) {
@@ -117,4 +113,4 @@ function getButtonColor(status) {
     return status === "DONE" ? "btn-outline-secondary" : "btn-outline-success";
 }
 
-export {loadData, addRow, saveData};
+export { loadData, addRow, saveData };
