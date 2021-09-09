@@ -1,6 +1,7 @@
 package controllers
 
 import controllers.helpers.{DatabaseExecutionContext, PasswordHelper, SessionDao}
+import controllers.helpers.RequestHelper.REDIRECT_TO_LOGIN
 import models.UserRepository
 import play.api.Logger
 import play.api.data.Form
@@ -51,7 +52,7 @@ class LoginController @Inject()
                 val token = SessionDao.generateToken(userData.email)
                 Redirect(routes.PurchaseController.index()).withSession(request.session + ("sessionToken" -> token))
               } else {
-                Redirect(routes.LoginController.loginForm()).withNewSession
+                REDIRECT_TO_LOGIN.withNewSession
               }
             )
         }
