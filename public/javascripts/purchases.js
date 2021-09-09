@@ -10,32 +10,28 @@ function loadData() {
 }
 
 function renderRows(data) {
-    fetch('/assets/templates/purchase.mustache')
-        .then((response) => response.text())
-        .then((template) => {
-            const rendered = Mustache.render(template, {
-                'items': data,
-                'buttonText': function () {
-                    return getButtonText(this.status);
-                },
-                'buttonColor': function () {
-                    return getButtonColor(this.status);
-                }
-            });
-            document.getElementById('purchaseList').innerHTML = rendered;
-        }).then(() => {
-            $('#purchaseList .input-group-prepend').toArray().forEach(item => {
-                const id = item.id.split("-")[1];
-                if (!id) {
-                    return;
-                }
-                // update decoration
-                strike(id, $('#ta-' + id).data('status'));
-                // add event handlers
-                $('#cb-' + id).click(() => updateStatus(item.innerText, id));
-                $('#db-' + id).click(() => deleteItem(Number(id)));
-            })
-        })
+    var template = document.getElementById('template').innerHTML
+    const rendered = Mustache.render(template, {
+        'items': data,
+        'buttonText': function () {
+            return getButtonText(this.status);
+        },
+        'buttonColor': function () {
+            return getButtonColor(this.status);
+        }
+    });
+    document.getElementById('purchaseList').innerHTML = rendered;
+    $('#purchaseList .input-group-prepend').toArray().forEach(item => {
+        const id = item.id.split("-")[1];
+        if (!id) {
+            return;
+        }
+        // update decoration
+        strike(id, $('#ta-' + id).data('status'));
+        // add event handlers
+        $('#cb-' + id).click(() => updateStatus(item.innerText, id));
+        $('#db-' + id).click(() => deleteItem(Number(id)));
+    })
 }
 
 function addRow() {
@@ -44,7 +40,7 @@ function addRow() {
         rows: 2,
         class: 'form-control',
         placeholder: 'Product'
-    })
+    });
     $('#purchaseList').append(row);
     disableSaveButton(false);
 }
@@ -59,7 +55,7 @@ function deleteItem(id) {
 function saveData() {
     const items = $('#purchaseList textarea').toArray()
         .filter(item => item.dataset.status === "NEW")
-        .filter(item => !!item.value)
+        .filter(item => !!item.value);
     items.forEach(el => requestData.newItems.push({ name: el.value, status: "TODO" }));
     if (isRequestDataIsEmpty()) return;
     const r = jsRoutes.controllers.PurchaseController.save(requestData);
