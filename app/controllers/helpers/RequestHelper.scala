@@ -14,34 +14,55 @@ object RequestHelper {
 
   val REDIRECT_TO_LOGIN: Result = Redirect(routes.LoginController.loginForm())
 
-  def PermissionCheckAction(implicit ec: ExecutionContext): ActionFilter[UserRequest] = new ActionFilter[UserRequest] {
+  def PermissionCheckAction(implicit
+      ec: ExecutionContext
+  ): ActionFilter[UserRequest] = new ActionFilter[UserRequest] {
     def executionContext: ExecutionContext = ec
 
-    def filter[A](input: UserRequest[A]): Future[Option[Result]] = input.user.map {
-			user => if (user.isEmpty) Some(Forbidden) else None
-		}
+    def filter[A](input: UserRequest[A]): Future[Option[Result]] =
+      input.user.map { user =>
+        if (user.isEmpty) Some(Forbidden) else None
+      }
   }
 
-  def showError(userRequest: UserRequest[AnyContent], messagesApi: MessagesApi): Form[User] => Future[Result] = {
-    formWithErrors: Form[User] => {
+  def showError(
+      userRequest: UserRequest[AnyContent],
+      messagesApi: MessagesApi
+  ): Form[User] => Future[Result] = { formWithErrors: Form[User] =>
+    {
       Future.successful(
-        BadRequest(views.html.userForm(formWithErrors)
-        (userRequest.request, messagesApi.preferred(Seq(Lang.defaultLang))))
+        BadRequest(
+          views.html.userForm(formWithErrors)(
+            userRequest.request,
+            messagesApi.preferred(Seq(Lang.defaultLang))
+          )
+        )
       )
     }
   }
 
-  def jsonErrors(): collection.Seq[(JsPath, collection.Seq[JsonValidationError])] => Future[Result] = {
-    errors: scala.collection.Seq[(JsPath, scala.collection.Seq[JsonValidationError])] =>
-      Future.successful(BadRequest(Json.obj("message" -> JsError.toJson(errors))))
+  def jsonErrors()
+      : collection.Seq[(JsPath, collection.Seq[JsonValidationError])] => Future[
+        Result
+      ] = {
+    errors: scala.collection.Seq[
+      (JsPath, scala.collection.Seq[JsonValidationError])
+    ] =>
+      Future.successful(
+        BadRequest(Json.obj("message" -> JsError.toJson(errors)))
+      )
   }
 
   def process(userToResult: User => Result): Option[User] => Result = {
-    userOption: Option[User] => userOption.map(user => userToResult(user)) getOrElse REDIRECT_TO_LOGIN
-	}
- 
-	def futureProcess(userToResult: User => Future[Result]): Option[User] => Future[Result] = {
-    userOption: Option[User] => 
-			userOption.map(user => userToResult(user)) getOrElse Future.successful(REDIRECT_TO_LOGIN)    
+    userOption: Option[User] =>
+      userOption.map(user => userToResult(user)) getOrElse REDIRECT_TO_LOGIN
+  }
+
+  def futureProcess(
+      userToResult: User => Future[Result]
+  ): Option[User] => Future[Result] = { userOption: Option[User] =>
+    userOption.map(user => userToResult(user)) getOrElse Future.successful(
+      REDIRECT_TO_LOGIN
+    )
   }
 }

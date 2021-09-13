@@ -31,9 +31,10 @@ trait UsersComponent {
 }
 
 @Singleton
-class UserRepository @Inject()
-(@NamedDatabase("shoper") databaseConfigProvider: DatabaseConfigProvider, implicit val ec: DatabaseExecutionContext)
-  extends HasDatabaseConfigProvider[JdbcProfile]
+class UserRepository @Inject() (
+    @NamedDatabase("shoper") databaseConfigProvider: DatabaseConfigProvider,
+    implicit val ec: DatabaseExecutionContext
+) extends HasDatabaseConfigProvider[JdbcProfile]
     with UsersComponent {
 
   import profile.api._
@@ -51,7 +52,7 @@ class UserRepository @Inject()
   }
 
   def update(user: User): Future[Int] = db.run {
-    (for {u <- users if u.id === user.id} yield u).update(user)
+    (for { u <- users if u.id === user.id } yield u).update(user)
   }
 
   def findById(id: Long): Future[Option[User]] = db.run {

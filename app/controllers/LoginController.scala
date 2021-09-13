@@ -1,6 +1,10 @@
 package controllers
 
-import controllers.helpers.{DatabaseExecutionContext, PasswordHelper, SessionDao}
+import controllers.helpers.{
+  DatabaseExecutionContext,
+  PasswordHelper,
+  SessionDao
+}
 import controllers.helpers.RequestHelper.REDIRECT_TO_LOGIN
 import models.UserRepository
 import play.api.Logger
@@ -15,18 +19,18 @@ import scala.concurrent.Future
 case class LoginForm(email: String, password: String)
 
 @Singleton
-class LoginController @Inject()
-(val controllerComponents: ControllerComponents,
- messagesAction: MessagesActionBuilder,
- userRepository: UserRepository,
- implicit val ec: DatabaseExecutionContext)
-  extends BaseController {
+class LoginController @Inject() (
+    val controllerComponents: ControllerComponents,
+    messagesAction: MessagesActionBuilder,
+    userRepository: UserRepository,
+    implicit val ec: DatabaseExecutionContext
+) extends BaseController {
 
   val logger: Logger = Logger(getClass.getCanonicalName)
 
   val loginConstraints: Form[LoginForm] = Form(
     mapping(
-      "email" -> email,
+      "email"    -> email,
       "password" -> nonEmptyText
     )(LoginForm.apply)(LoginForm.unapply)
   )
@@ -36,21 +40,30 @@ class LoginController @Inject()
       Ok(views.html.login(loginConstraints))
   }
 
-  def login(): Action[AnyContent] = Action.async {
-    implicit request =>
-      loginConstraints.bindFromRequest().fold(
+  def login(): Action[AnyContent] = Action.async { implicit request =>
+    loginConstraints
+      .bindFromRequest()
+      .fold(
         formWithErrors => {
           Future.successful(
-            BadRequest(views.html.login(formWithErrors)(request, messagesApi.preferred(Seq(Lang.defaultLang))))
+            BadRequest(
+              views.html.login(formWithErrors)(
+                request,
+                messagesApi.preferred(Seq(Lang.defaultLang))
+              )
+            )
           )
         },
         userData => {
           isValidLogin(userData.email, userData.password)
             .map(valid =>
               if (valid) {
-                logger.info(s"Successfully login userForm with email: [${userData.email}]")
+                logger.info(
+                  s"Successfully login userForm with email: [${userData.email}]"
+                )
                 val token = SessionDao.generateToken(userData.email)
-                Redirect(routes.PurchaseController.index()).withSession(request.session + ("sessionToken" -> token))
+                Redirect(routes.PurchaseController.index())
+                  .withSession(request.session + ("sessionToken" -> token))
               } else {
                 REDIRECT_TO_LOGIN.withNewSession
               }
@@ -63,7 +76,7 @@ class LoginController @Inject()
     logger.info(s"Trying to login userForm with email: [$email]")
     userRepository.findByEmail(email).map {
       case Some(user) => PasswordHelper.checkPassword(password, user.password)
-      case _ => false
+      case _          => false
     }
   }
 }

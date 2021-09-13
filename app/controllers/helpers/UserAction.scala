@@ -7,13 +7,14 @@ import java.time.LocalDateTime
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class UserRequest[A](val user: Future[Option[User]], val request: Request[A]) extends WrappedRequest[A](request)
+class UserRequest[A](val user: Future[Option[User]], val request: Request[A])
+    extends WrappedRequest[A](request)
 
-class UserAction @Inject()
-(val parser: BodyParsers.Default,
- userRepository: UserRepository,
- implicit val ec: DatabaseExecutionContext)
-  extends ActionBuilder[UserRequest, AnyContent]
+class UserAction @Inject() (
+    val parser: BodyParsers.Default,
+    userRepository: UserRepository,
+    implicit val ec: DatabaseExecutionContext
+) extends ActionBuilder[UserRequest, AnyContent]
     with ActionTransformer[Request, UserRequest] {
 
   def transform[A](request: Request[A]) = Future.successful {

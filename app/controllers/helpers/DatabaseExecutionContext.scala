@@ -11,5 +11,6 @@ import scala.concurrent.ExecutionContext
 trait DatabaseExecutionContext extends ExecutionContext
 
 @Singleton
-class DatabaseExecutionContextImpl @Inject()(system: ActorSystem)
-  extends CustomExecutionContext(system, "db.executor") with DatabaseExecutionContext
+class DatabaseExecutionContextImpl @Inject() (system: ActorSystem)
+    extends CustomExecutionContext(system, "db.executor")
+    with DatabaseExecutionContext
