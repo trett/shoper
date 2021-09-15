@@ -16,7 +16,7 @@ import play.api.mvc._
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future
 
-case class LoginForm(email: String, password: String)
+case class LoginForm(login: String, password: String)
 
 @Singleton
 class LoginController @Inject() (
@@ -30,7 +30,7 @@ class LoginController @Inject() (
 
   val loginConstraints: Form[LoginForm] = Form(
     mapping(
-      "email"    -> email,
+      "login"    -> nonEmptyText,
       "password" -> nonEmptyText
     )(LoginForm.apply)(LoginForm.unapply)
   )
@@ -55,13 +55,13 @@ class LoginController @Inject() (
           )
         },
         userData => {
-          isValidLogin(userData.email, userData.password)
+          isValidLogin(userData.login, userData.password)
             .map(valid =>
               if (valid) {
                 logger.info(
-                  s"Successfully login userForm with email: [${userData.email}]"
+                  s"Successfully login userForm with email: [${userData.login}]"
                 )
-                val token = SessionDao.generateToken(userData.email)
+                val token = SessionDao.generateToken(userData.login)
                 Redirect(routes.PurchaseController.index())
                   .withSession(request.session + ("sessionToken" -> token))
               } else {
@@ -72,9 +72,9 @@ class LoginController @Inject() (
       )
   }
 
-  private def isValidLogin(email: String, password: String): Future[Boolean] = {
-    logger.info(s"Trying to login userForm with email: [$email]")
-    userRepository.findByEmail(email).map {
+  private def isValidLogin(login: String, password: String): Future[Boolean] = {
+    logger.info(s"Trying to login userForm with login: [$login]")
+    userRepository.findByLogin(login).map {
       case Some(user) => PasswordHelper.checkPassword(password, user.password)
       case _          => false
     }

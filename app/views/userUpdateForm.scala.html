@@ -1,4 +1,4 @@
-@(userConstraints: Form[User], email: String, name: Option[String])(implicit request: RequestHeader, messages: Messages)
+@(userConstraints: Form[User],login: String, email: Option[String], name: Option[String])(implicit request: RequestHeader, messages: Messages)
     @implicitFieldConstructor = @{
         b4.vertical.fieldConstructor(isCustom = true, withFeedbackTooltip = true)
     }
@@ -10,7 +10,7 @@
                 @b4.text(userConstraints("email"),
                     Symbol("_label") -> "Email",
                     Symbol("placeholder") -> "Email",
-                    Symbol("value") -> email,
+                    Symbol("value") -> email.getOrElse(""),
                     Symbol("readonly") -> "readonly")
                 @b4.password(userConstraints("password"),
                     Symbol("_label") -> "Password",
@@ -20,6 +20,7 @@
                     Symbol("placeholder") -> "Your Name",
                     Symbol("value") -> name.getOrElse(""))
                 @b4.hidden(userConstraints("id"), Symbol("value") -> 0)
+                @b4.hidden(userConstraints("login"), Symbol("value") -> login)
                 @b4.buttonType("submit", Symbol("class") -> "btn btn-primary") {
                     <i class="fas fa-save"></i> Save }
             }

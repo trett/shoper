@@ -39,7 +39,8 @@ class UserController @Inject() (
   val userConstraints: Form[User] = Form(
     mapping(
       "id"       -> longNumber,
-      "email"    -> nonEmptyText,
+      "login" -> nonEmptyText,
+      "email"    -> optional(text),
       "password" -> nonEmptyText,
       "name"     -> optional(text)
     )(User.apply)(User.unapply)
@@ -77,7 +78,7 @@ class UserController @Inject() (
       {
         userRequest.user.map(process { user =>
           Ok(
-            views.html.userUpdateForm(userConstraints, user.email, user.name)(
+            views.html.userUpdateForm(userConstraints, user.login, user.email, user.name)(
               userRequest,
               userRequest.request.messages
             )
@@ -96,10 +97,11 @@ class UserController @Inject() (
             userData => {
               userRequest.user.flatMap(futureProcess { user =>
                 logger.info(
-                  s"Saving user with email: [${userData.email}], new name: [${userData.name}]"
+                  s"Saving user with login: [${userData.login}], new name: [${userData.name}]"
                 )
                 val newUser = User(
                   0,
+                  userData.login,
                   userData.email,
                   PasswordHelper.hashPassword(userData.password),
                   userData.name
@@ -123,7 +125,7 @@ class UserController @Inject() (
             userData => {
               userRequest.user.flatMap(futureProcess { user =>
                 logger.info(
-                  s"Updating user with email: [${userData.email}], new name: [${userData.name}]"
+                  s"Updating user with login: [${userData.login}], new name: [${userData.name}]"
                 )
                 // check email belong to user session
                 if (user.email != userData.email) {
@@ -132,6 +134,7 @@ class UserController @Inject() (
                 val updatedUser =
                   User(
                     user.id,
+                    userData.login,
                     user.email,
                     PasswordHelper.hashPassword(userData.password),
                     userData.name

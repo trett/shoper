@@ -17,11 +17,13 @@ trait UsersComponent {
 
     val users = TableQuery[UsersTable]
 
-    def * = (id, email, password, name) <> (User.tupled, User.unapply)
+    def * = (id, login, email, password, name) <> (User.tupled, User.unapply)
 
     def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
 
-    def email = column[String]("email")
+    def login = column[String]("login")
+
+    def email = column[Option[String]]("email")
 
     def password = column[String]("password")
 
@@ -55,11 +57,7 @@ class UserRepository @Inject() (
     (for { u <- users if u.id === user.id } yield u).update(user)
   }
 
-  def findById(id: Long): Future[Option[User]] = db.run {
-    users.filter(_.id === id).result.headOption
-  }
-
-  def findByEmail(email: String): Future[Option[User]] = db.run {
-    users.filter(_.email === email).result.headOption
+  def findByLogin(login: String): Future[Option[User]] = db.run {
+    users.filter(_.login === login).result.headOption
   }
 }

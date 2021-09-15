@@ -3,10 +3,13 @@
         b4.vertical.fieldConstructor(isCustom = true, withFeedbackTooltip = true)
     }
 
-    @main("Profile") {
+    @main("User management") {
         @menu {
             <div>
             @b4.formCSRF(routes.UserController.save(), Symbol("class") -> "mt-4") {
+                @b4.text(userConstraints("login"),
+                    Symbol("_label") -> "Login",
+                    Symbol("placeholder") -> "Login")
                 @b4.text(userConstraints("email"),
                     Symbol("_label") -> "Email",
                     Symbol("placeholder") -> "Email")

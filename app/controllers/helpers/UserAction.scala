@@ -27,8 +27,8 @@ class UserAction @Inject() (
     sessionTokenOpt
       .flatMap(token => SessionDao.getSession(token))
       .filter(_.expiration.isAfter(LocalDateTime.now()))
-      .map(_.email)
-      .map(email => userRepository.findByEmail(email))
+      .map(_.login)
+      .map(login => userRepository.findByLogin(login))
       .getOrElse(Future.successful(Option.empty[User]))
   }
 
