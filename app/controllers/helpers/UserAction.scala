@@ -1,14 +1,15 @@
 package controllers.helpers
 
-import models.{User, UserRepository}
+import models.User
+import models.UserRepository
 import play.api.mvc._
 
 import java.time.LocalDateTime
 import javax.inject.Inject
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
-class UserRequest[A](val user: Future[Option[User]], val request: Request[A])
-    extends WrappedRequest[A](request)
+class UserRequest[A](val user: Future[Option[User]], val request: Request[A]) extends WrappedRequest[A](request)
 
 class UserAction @Inject() (
     val parser: BodyParsers.Default,

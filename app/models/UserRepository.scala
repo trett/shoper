@@ -1,11 +1,13 @@
 package models
 
 import controllers.helpers.DatabaseExecutionContext
-import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
+import play.api.db.slick.DatabaseConfigProvider
+import play.api.db.slick.HasDatabaseConfigProvider
 import play.db.NamedDatabase
 import slick.jdbc.JdbcProfile
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
+import javax.inject.Singleton
 import scala.concurrent.Future
 
 trait UsersComponent {
@@ -53,8 +55,8 @@ class UserRepository @Inject() (
     users.result
   }
 
-  def update(user: User): Future[Int] = db.run {
-    (for { u <- users if u.id === user.id } yield u).update(user)
+  def update(id: Long, email: Option[String], name: Option[String]): Future[Int] = db.run {
+    (for { u <- users if u.id === id } yield (u.email, u.name)).update((email, name))
   }
 
   def findByLogin(login: String): Future[Option[User]] = db.run {

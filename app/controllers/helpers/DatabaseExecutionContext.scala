@@ -4,7 +4,8 @@ import akka.actor.ActorSystem
 import com.google.inject.ImplementedBy
 import play.api.libs.concurrent.CustomExecutionContext
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
+import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
 
 @ImplementedBy(classOf[DatabaseExecutionContextImpl])

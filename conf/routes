@@ -22,11 +22,11 @@ POST        /login                  controllers.LoginController.login()
 
 
 # UserController
-GET         /userForm               controllers.UserController.form()
+GET         /userForm               controllers.UserController.createUserForm()
 
 GET         /users                  controllers.UserController.users()
 
-GET         /profile                controllers.UserController.updateForm()
+GET         /profile                controllers.UserController.profileForm()
 
 POST        /user/save              controllers.UserController.save()
 

@@ -1,12 +1,14 @@
 package models
 
 import controllers.helpers.DatabaseExecutionContext
-import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
+import play.api.db.slick.DatabaseConfigProvider
+import play.api.db.slick.HasDatabaseConfigProvider
 import play.db.NamedDatabase
 import slick.jdbc.JdbcProfile
 
 import java.time.LocalDateTime
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
+import javax.inject.Singleton
 import scala.concurrent.Future
 
 @Singleton

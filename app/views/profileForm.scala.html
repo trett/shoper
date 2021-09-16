@@ -1,0 +1,24 @@
+@(userProfileConstraints: Form[UserProfile], userProfile: UserProfile)(implicit request: RequestHeader, messages: Messages)
+    @implicitFieldConstructor = @{
+        b4.vertical.fieldConstructor(isCustom = true, withFeedbackTooltip = true)
+    }
+
+    @main("Profile") {
+        @menu {
+            @b4.formCSRF(routes.UserController.update(), Symbol("class") -> "mt-4") {
+                @b4.email(userProfileConstraints("email"),
+                    Symbol("_label") -> "Email",
+                    Symbol("placeholder") -> "Email",
+                    Symbol("value") -> userProfile.email.getOrElse(""))
+                @b4.text(userProfileConstraints("name"),
+                    Symbol("_label") -> "Name",
+                    Symbol("placeholder") -> "Your Name",
+                    Symbol("value") -> userProfile.name.getOrElse(""))
+                @b4.buttonType("submit", Symbol("class") -> "btn btn-primary") {
+                    <i class="fas fa-save"></i> Save }
+            }
+            @b4.static("Change password", Symbol("_hideLabel") -> true){
+                <a href="/change_password"><i class="fa fa-lock"></i> Change password</a>
+            }   
+        }
+    }
