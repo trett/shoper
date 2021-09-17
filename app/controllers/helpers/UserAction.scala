@@ -1,19 +1,21 @@
 package controllers.helpers
 
-import models.{User, UserRepository}
+import models.User
+import models.UserRepository
 import play.api.mvc._
 
 import java.time.LocalDateTime
 import javax.inject.Inject
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 class UserRequest[A](val user: Future[Option[User]], val request: Request[A]) extends WrappedRequest[A](request)
 
-class UserAction @Inject()
-(val parser: BodyParsers.Default,
- userRepository: UserRepository,
- implicit val ec: DatabaseExecutionContext)
-  extends ActionBuilder[UserRequest, AnyContent]
+class UserAction @Inject() (
+    val parser: BodyParsers.Default,
+    userRepository: UserRepository,
+    implicit val ec: DatabaseExecutionContext
+) extends ActionBuilder[UserRequest, AnyContent]
     with ActionTransformer[Request, UserRequest] {
 
   def transform[A](request: Request[A]) = Future.successful {
@@ -26,8 +28,8 @@ class UserAction @Inject()
     sessionTokenOpt
       .flatMap(token => SessionDao.getSession(token))
       .filter(_.expiration.isAfter(LocalDateTime.now()))
-      .map(_.email)
-      .map(email => userRepository.findByEmail(email))
+      .map(_.login)
+      .map(login => userRepository.findByLogin(login))
       .getOrElse(Future.successful(Option.empty[User]))
   }
 

@@ -1,18 +1,21 @@
 package models
 
 import controllers.helpers.DatabaseExecutionContext
-import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
+import play.api.db.slick.DatabaseConfigProvider
+import play.api.db.slick.HasDatabaseConfigProvider
 import play.db.NamedDatabase
 import slick.jdbc.JdbcProfile
 
 import java.time.LocalDateTime
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
+import javax.inject.Singleton
 import scala.concurrent.Future
 
 @Singleton
-class PurchaseRepository @Inject()
-(@NamedDatabase("shoper") databaseConfigProvider: DatabaseConfigProvider, implicit val ec: DatabaseExecutionContext)
-  extends HasDatabaseConfigProvider[JdbcProfile]
+class PurchaseRepository @Inject() (
+    @NamedDatabase("shoper") databaseConfigProvider: DatabaseConfigProvider,
+    implicit val ec: DatabaseExecutionContext
+) extends HasDatabaseConfigProvider[JdbcProfile]
     with UsersComponent {
 
   override protected val dbConfigProvider: DatabaseConfigProvider = databaseConfigProvider
@@ -20,7 +23,7 @@ class PurchaseRepository @Inject()
   import profile.api._
 
   private val purchases = TableQuery[PurchasesTable]
-  private val users = TableQuery[UsersTable]
+  private val users     = TableQuery[UsersTable]
 
   def batchInsert(purchases: Seq[Purchase]): Future[Unit] = db.run {
     DBIO.seq(this.purchases ++= purchases)
@@ -39,15 +42,19 @@ class PurchaseRepository @Inject()
       .map(seq => {
         seq.map(res => {
           val (purchase, user) = res
-          PurchaseDTO(Some(purchase.id), purchase.name, purchase.status,
-            Some(purchase.createdAt), user.map(_.name).getOrElse(Some("Unknown"))
+          PurchaseDTO(
+            Some(purchase.id),
+            purchase.name,
+            purchase.status,
+            Some(purchase.createdAt),
+            user.map(_.name).getOrElse(Some("Unknown"))
           )
         })
       })
   }
 
   def update(id: Long, status: String): Future[Int] = db.run {
-    (for {p <- purchases if p.id === id} yield p.status).update(status)
+    (for { p <- purchases if p.id === id } yield p.status).update(status)
   }
 
   private class PurchasesTable(tag: Tag) extends Table[Purchase](tag, "purchases") {

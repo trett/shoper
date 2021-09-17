@@ -1,22 +1,25 @@
-@(userConstraints: Form[User])(implicit request: RequestHeader, messages: Messages)
+@(createUserConstraints: Form[CreateUser])(implicit request: RequestHeader, messages: Messages)
     @implicitFieldConstructor = @{
         b4.vertical.fieldConstructor(isCustom = true, withFeedbackTooltip = true)
     }
 
-    @main("Profile") {
+    @main("User management") {
         @menu {
             <div>
             @b4.formCSRF(routes.UserController.save(), Symbol("class") -> "mt-4") {
-                @b4.text(userConstraints("email"),
+                @b4.text(createUserConstraints("login"),
+                    Symbol("_label") -> "Login",
+                    Symbol("placeholder") -> "Login")
+                @b4.email(createUserConstraints("email"),
                     Symbol("_label") -> "Email",
                     Symbol("placeholder") -> "Email")
-                @b4.password(userConstraints("password"),
+                @b4.password(createUserConstraints("password"),
                     Symbol("_label") -> "Password",
                     Symbol("_class") -> "position-relative")
-                @b4.text(userConstraints("name"),
+                @b4.text(createUserConstraints("name"),
                     Symbol("_label") -> "Name",
                     Symbol("placeholder") -> "Your Name")
-                @b4.hidden(userConstraints("id"),
+                @b4.hidden(createUserConstraints("id"),
                     Symbol("value") -> 0)
                 @b4.buttonType("submit", Symbol("class") -> "btn btn-primary") {
                     <i class="fas fa-save"></i> Save }

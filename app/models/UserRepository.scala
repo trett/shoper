@@ -1,11 +1,13 @@
 package models
 
 import controllers.helpers.DatabaseExecutionContext
-import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
+import play.api.db.slick.DatabaseConfigProvider
+import play.api.db.slick.HasDatabaseConfigProvider
 import play.db.NamedDatabase
 import slick.jdbc.JdbcProfile
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
+import javax.inject.Singleton
 import scala.concurrent.Future
 
 trait UsersComponent {
@@ -17,11 +19,13 @@ trait UsersComponent {
 
     val users = TableQuery[UsersTable]
 
-    def * = (id, email, password, name) <> (User.tupled, User.unapply)
+    def * = (id, login, email, password, name) <> (User.tupled, User.unapply)
 
     def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
 
-    def email = column[String]("email")
+    def login = column[String]("login")
+
+    def email = column[Option[String]]("email")
 
     def password = column[String]("password")
 
@@ -31,9 +35,10 @@ trait UsersComponent {
 }
 
 @Singleton
-class UserRepository @Inject()
-(@NamedDatabase("shoper") databaseConfigProvider: DatabaseConfigProvider, implicit val ec: DatabaseExecutionContext)
-  extends HasDatabaseConfigProvider[JdbcProfile]
+class UserRepository @Inject() (
+    @NamedDatabase("shoper") databaseConfigProvider: DatabaseConfigProvider,
+    implicit val ec: DatabaseExecutionContext
+) extends HasDatabaseConfigProvider[JdbcProfile]
     with UsersComponent {
 
   import profile.api._
@@ -50,15 +55,11 @@ class UserRepository @Inject()
     users.result
   }
 
-  def update(user: User): Future[Int] = db.run {
-    (for {u <- users if u.id === user.id} yield u).update(user)
+  def update(id: Long, email: Option[String], name: Option[String]): Future[Int] = db.run {
+    (for { u <- users if u.id === id } yield (u.email, u.name)).update((email, name))
   }
 
-  def findById(id: Long): Future[Option[User]] = db.run {
-    users.filter(_.id === id).result.headOption
-  }
-
-  def findByEmail(email: String): Future[Option[User]] = db.run {
-    users.filter(_.email === email).result.headOption
+  def findByLogin(login: String): Future[Option[User]] = db.run {
+    users.filter(_.login === login).result.headOption
   }
 }
